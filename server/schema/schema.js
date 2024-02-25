@@ -4,6 +4,24 @@ const { projects, clients } = require("../sampleData");
 // Impor GraphQLObjectType, GraphQLID, GraphQLString, dan GraphQLSchema, GraphQLList dari paket graphql
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLSchema, GraphQLList } = require("graphql");
 
+// Tentukan tipe data untuk project
+const ProjectType = new GraphQLObjectType({
+  name: "Project",
+  fields: () => ({
+    id: { type: GraphQLID },
+    name: { type: GraphQLString },
+    description: { type: GraphQLString },
+    status: { type: GraphQLString },
+    client: {
+      type: ClientType,
+      resolve(parent, args) {
+        // Fungsi resolve untuk mencari dan mengembalikan client berdasarkan ID client yang terkait dengan project
+        return clients.find((client) => client.id === parent.clientId);
+      },
+    },
+  }),
+});
+
 // Tentukan tipe data untuk klien
 const ClientType = new GraphQLObjectType({
   name: "Client",
@@ -19,7 +37,25 @@ const ClientType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
   fields: {
-    // Field 'clients' dalam root query, mengembalikan daftar semua klien yang tersedia
+    // Field 'projects' dalam root query, mengembalikan daftar semua project yang tersedia
+    projects: {
+      type: new GraphQLList(ProjectType),
+      resolve(parent, args) {
+        return projects;
+      },
+    },
+
+    // Field 'project' dalam root query, mengembalikan informasi tentang satu project berdasarkan ID yang diberikan
+    project: {
+      type: ProjectType,
+      args: { id: { type: GraphQLID } },
+      resolve(parent, args) {
+        // Fungsi resolve untuk mencari dan mengembalikan project berdasarkan ID
+        return projects.find((project) => project.id === args.id);
+      },
+    },
+
+    // Field 'clients' dalam root query, mengembalikan daftar semua client yang tersedia
     clients: {
       type: new GraphQLList(ClientType),
       resolve(parent, args) {
@@ -27,12 +63,12 @@ const RootQuery = new GraphQLObjectType({
       },
     },
 
-    // Field 'client' dalam root query, mengembalikan informasi tentang satu klien berdasarkan ID yang diberikan
+    // Field 'client' dalam root query, mengembalikan informasi tentang satu client berdasarkan ID yang diberikan
     client: {
       type: ClientType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
-        // Fungsi resolve untuk mencari dan mengembalikan klien berdasarkan ID
+        // Fungsi resolve untuk mencari dan mengembalikan client berdasarkan ID
         return clients.find((client) => client.id === args.id);
       },
     },
@@ -42,5 +78,5 @@ const RootQuery = new GraphQLObjectType({
 // Ekspor skema GraphQL
 module.exports = new GraphQLSchema({
   // Atur query utama untuk skema
-  query: RootQuery, 
+  query: RootQuery,
 });
